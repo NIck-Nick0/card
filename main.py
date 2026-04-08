@@ -10,7 +10,10 @@ class Hero:
         self._c_hel = max_hel
         self._ex = True
         self._ap =3
+
         self._hand = []
+        self._deck = []  # المجموعة الكاملة للبطل (مخفية)
+        self._field = []
     # --- القراء (Getters) ---
 
 
@@ -83,15 +86,35 @@ class Hero:
         else : 
             print("mo ap point to use this action")
 
+
+
+
+    def load_deck(self, cards_list):
+        self._deck = cards_list.copy() 
+        random.shuffle(self._deck)
     
-    def draw_card(self, deck):
-        """تسحب كرت عشوائي من الـ deck وتضيفه للـ hand"""
-        if len(deck) > 0:
-            new_card = random.choice(deck)
+    def draw_card(self):
+        if len(self._deck) > 0:
+            # بنسحب آخر كارت في الديك (LIFO) ونحطه في الإيد
+            new_card = self._deck.pop() 
             self._hand.append(new_card)
-            print(f"🃏 {self.name} سحب كرت: {new_card.name} (Cost: {new_card.cost})")
+            print(f"🃏  Draw card : {new_card.name}")
         else:
-            print("⚠️ المجموعة فارغة!")
+            print(f"⚠️   Emety deck ")
+
+
+    def summon_card(self, index):  
+        if 0 <= index < len(self._hand):
+            card = self._hand[index]
+            if self.ap >= card.cost:
+                self.ap -= card.cost
+                self._field.append(card) 
+                self._hand.pop(index)    
+                print(f"⚔️ {self.name} summoned {card.name} to the field!")
+            else:
+                print(f"❌ Not enough AP! (Required: {card.cost})")
+        else:
+            print("⚠️ Invalid card index!" )       
 
 
 class Card(Hero):
@@ -110,6 +133,35 @@ class Card(Hero):
     def cost(self, value):
         self._cost = value
     
+
+
+
+
+
+
+def show_field(hero1, hero2):
+    print(f"\n" + "="*30)
+    print(f"🏟️  FIELD STATE")
+    print(f"[{hero1.name}] Units: ", end="")
+    for i, u in enumerate(hero1.field):
+        print(f"({i}){u.name}[HP:{u.c_hel}] ", end="")
+    print(f"\n--- VS ---")
+    print(f"[{hero2.name}] Units: ", end="")
+    for i, u in enumerate(hero2.field):
+        print(f"({i}){u.name}[HP:{u.c_hel}] ", end="")
+    print(f"\n" + "="*30)
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 mon1 = Card(1, "goblin", cost=3, atk=5, ar=2, max_hel=20)
@@ -159,14 +211,6 @@ all_cards = [c1, c2, c3, c4, c5, c6, c7, c8, c9, c10,
 
 
 
-
-
-
-
-
-
-
-
 # print(mon1.__dict__)
 # print(mon2.__dict__)
 # print(hero1.__dict__)
@@ -180,23 +224,81 @@ all_cards = [c1, c2, c3, c4, c5, c6, c7, c8, c9, c10,
 # print(mon1.__dict__)
 # print(mon2.__dict__)
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# game 
+
+# كل لاعب يأخذ نسخة من الـ 20 كرت
+hero1.load_deck(all_cards)
+hero2.load_deck(all_cards)
+
+# سحب 3 كروت مبدئية لكل لاعب (Starting Hand)
+print ("player one :-")
+for _ in range(3):
+    hero1.draw_card()
+print()
+print ("player two :-")
+for _ in range(3):
+    hero2.draw_card()
+
+
 turn = 0
 
 while hero1.is_alive and hero2.is_alive :
      
     hero1._ap = hero1._ap + turn
-    while hero1.ap >= 3 :
+    while hero1.ap > 0 :
         print (f"your AP = {hero1.ap} HP = {hero1.c_hel} AR = {hero1.ar} ATK = {hero1.atk}")
-        action = input("player 1 turn : ").strip()
-        if action == "a" : 
+        for i, card in enumerate(hero1.hand):
+            print(f"[{i}] {card.name} | Cost: {card.cost} | ATK: {card.atk}")
+        print ("player one :-")
+        action = input("Enter 'a' to Attack, 'e' to End turn, or Card Index to Summon: ").strip()
+        
+        if action == "a":
             hero1.Battck(hero2)
+        elif action == "e":
+            hero1.ap = 0
+            break # ينهي الدور يدوياً
+        elif action.isdigit(): # لو دخل رقم (Index)
+            idx = int(action)
+            hero1.summon_card(idx) # استدعاء الدالة اللي بتنقل الكارت للملعب
+        
+        if not hero2.is_alive: break
 
-    hero2._ap = hero2._ap + turn
-    while hero2.ap >= 3 :
+
+
+
+    while hero2.ap > 0 :
         print (f"your AP = {hero2.ap} HP = {hero2.c_hel} AR = {hero2.ar} ATK = {hero2.atk}")
-        action = input("player 2 turn : ").strip()
-        if action == "a" : 
+        for i, card in enumerate(hero2.hand):
+            print(f"[{i}] {card.name} | Cost: {card.cost} | ATK: {card.atk}")
+
+        print ("player two :-")
+        action = input("Enter 'a' to Attack, 'e' to End turn, or Card Index to Summon: ").strip()
+        
+        if action == "a":
             hero2.Battck(hero1)
+        elif action == "e":
+            hero2.ap = 0
+            break # ينهي الدور يدوياً
+        elif action.isdigit(): # لو دخل رقم (Index)
+            idx = int(action)
+            hero2.summon_card(idx) # استدعاء الدالة اللي بتنقل الكارت للملعب
+        
+        if not hero1.is_alive: break
 
     turn += 1 
 
