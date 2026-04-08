@@ -1,3 +1,5 @@
+import random
+
 class Hero: 
     def __init__(self, id, name, atk, ar, max_hel ):
         self._id = id
@@ -8,7 +10,13 @@ class Hero:
         self._c_hel = max_hel
         self._ex = True
         self._ap =3
+        self._hand = []
     # --- القراء (Getters) ---
+
+
+    @property
+    def hand(self): return self._hand
+
     @property
     def id(self): return self._id
 
@@ -38,7 +46,7 @@ class Hero:
         return self.c_hel >= 0
 
 
-    # -------------------------  (setter) ---------------------------
+    # -------------------------  (setter)   ---------------------------
 
 
     @atk.setter
@@ -58,6 +66,10 @@ class Hero:
         self._max_hel = value
 
 
+    @ap.setter
+    def ap(self, value): 
+        self._ap = value
+
     def Battck (self :object,target :object ) :
         if self._ap >= 3 :
             target.c_hel
@@ -71,29 +83,15 @@ class Hero:
         else : 
             print("mo ap point to use this action")
 
-    # def attck (self :object,target :object ) :
-    #     if self._ap >= 3 :
-    #         target.c_hel
-    #         damage = self.atk - target.ar
-            
-    #         if damage < 0: damage = 0
-            
-    #         target.c_hel -= damage
-    #         print(f"{self.name} deals {damage} damage to {target.name}")
-    #         self._ap -= 3
-    #     else : 
-    #         print("mo ap point to use this action")
-
-
-
-
-
-
-
-
-
-
-
+    
+    def draw_card(self, deck):
+        """تسحب كرت عشوائي من الـ deck وتضيفه للـ hand"""
+        if len(deck) > 0:
+            new_card = random.choice(deck)
+            self._hand.append(new_card)
+            print(f"🃏 {self.name} سحب كرت: {new_card.name} (Cost: {new_card.cost})")
+        else:
+            print("⚠️ المجموعة فارغة!")
 
 
 class Card(Hero):
@@ -114,59 +112,99 @@ class Card(Hero):
     
 
 
-
-
- 
-
-
-
-
-
-
 mon1 = Card(1, "goblin", cost=3, atk=5, ar=2, max_hel=20)
 mon2 = Card(2, "Dragon", cost=7, atk=15, ar=3, max_hel=30)
-hero1= Hero(3, "Knight", atk=3, ar=3, max_hel=100)
-hero2 = Hero(4, "Knight", atk=3, ar=3,  max_hel=100)
-
-
-print(mon1.__dict__)
-print(mon2.__dict__)
-print(hero1.__dict__)
-print(hero2.__dict__)
-
-mon1.Battck(mon2)
-mon1.Battck(mon2)
+hero1= Hero(3, "Knight", atk=6, ar=3, max_hel=100)
+hero2 = Hero(4, "Knight", atk=6, ar=3,  max_hel=100)
 
 
 
-print(mon1.__dict__)
-print(mon2.__dict__)
 
 
-# add deak 
+
+
+c1 = Card(101, "Slayer", cost=1, atk=8, ar=1, max_hel=10)
+c2 = Card(102, "Berserker", cost=2, atk=12, ar=0, max_hel=15)
+c3 = Card(103, "Assassin", cost=2, atk=15, ar=1, max_hel=8)
+c4 = Card(104, "Fire Mage", cost=3, atk=18, ar=2, max_hel=20)
+c5 = Card(105, "Dragon Kin", cost=4, atk=25, ar=4, max_hel=30)
+c6 = Card(106, "Giant", cost=5, atk=35, ar=5, max_hel=50)
+
+# --- كروت الدفاع (Tanks) ---
+c7 = Card(107, "Shield Bearer", cost=1, atk=2, ar=5, max_hel=15)
+c8 = Card(108, "Iron Golem", cost=3, atk=5, ar=10, max_hel=40)
+c9 = Card(109, "Royal Guard", cost=2, atk=6, ar=6, max_hel=25)
+c10 = Card(110, "Castle Wall", cost=4, atk=0, ar=15, max_hel=60)
+
+# --- كروت متوازنة (Balanced) ---
+c11 = Card(111, "Knight apprentice", cost=1, atk=5, ar=2, max_hel=12)
+c12 = Card(112, "Viking Warrior", cost=2, atk=9, ar=3, max_hel=20)
+c13 = Card(113, "Samurai", cost=3, atk=14, ar=4, max_hel=25)
+c14 = Card(114, "Paladin", cost=4, atk=12, ar=8, max_hel=35)
+
+# --- كروت رخيصة للبداية (Early Game) ---
+c15 = Card(115, "Goblin", cost=1, atk=4, ar=1, max_hel=8)
+c16 = Card(116, "Wolf", cost=1, atk=6, ar=0, max_hel=10)
+c17 = Card(117, "Skeleton", cost=1, atk=5, ar=1, max_hel=7)
+
+# --- كروت قوية جداً (Legendary/Boss) ---
+c18 = Card(118, "Dark Lord", cost=5, atk=40, ar=10, max_hel=100)
+c19 = Card(119, "Archangel", cost=5, atk=30, ar=15, max_hel=80)
+c20 = Card(120, "Void Beast", cost=4, atk=22, ar=6, max_hel=45)
+
+# وضعهم كلهم في الـ Deck الأساسي
+all_cards = [c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, 
+             c11, c12, c13, c14, c15, c16, c17, c18, c19, c20]
+
+
+
+
+
+
+
+
+
+
+
+
+# print(mon1.__dict__)
+# print(mon2.__dict__)
+# print(hero1.__dict__)
+# print(hero2.__dict__)
+
+# mon1.Battck(mon2)
+# mon1.Battck(mon2)
+
+
+
+# print(mon1.__dict__)
+# print(mon2.__dict__)
+
+turn = 0
+
 while hero1.is_alive and hero2.is_alive :
-    turn = 0 
-    hero1.ap = hero1.ap + turn
-    while hero1.ap > 0 :
-        action = input("play")
+     
+    hero1._ap = hero1._ap + turn
+    while hero1.ap >= 3 :
+        print (f"your AP = {hero1.ap} HP = {hero1.c_hel} AR = {hero1.ar} ATK = {hero1.atk}")
+        action = input("player 1 turn : ").strip()
+        if action == "a" : 
+            hero1.Battck(hero2)
 
-
-        ...
-
-
-
-
-    while hero1.ap > 0 :
-
-        ...
-
+    hero2._ap = hero2._ap + turn
+    while hero2.ap >= 3 :
+        print (f"your AP = {hero2.ap} HP = {hero2.c_hel} AR = {hero2.ar} ATK = {hero2.atk}")
+        action = input("player 2 turn : ").strip()
+        if action == "a" : 
+            hero2.Battck(hero1)
 
     turn += 1 
 
 
 
-    # x=input()
-    # if x == "1" : 
-    #     pass
 
-    # hero1.ap,hero2.ap += 3
+
+
+
+    
+
