@@ -1,4 +1,5 @@
 import random
+import os
 
 class Hero: 
     def __init__(self, id, name, atk, ar, max_hel ):
@@ -47,6 +48,10 @@ class Hero:
     @property
     def is_alive(self):
         return self.c_hel >= 0
+    
+    @property
+    def field(self):
+        return self._field
 
 
     # -------------------------  (setter)   ---------------------------
@@ -228,6 +233,13 @@ all_cards = [c1, c2, c3, c4, c5, c6, c7, c8, c9, c10,
 
 
 
+def clear_screen():
+    # 'nt' معناها Windows، و 'posix' معناها Linux أو Mac
+    if os.name == 'nt':
+        os.system('cls')
+    else:
+        os.system('clear')
+
 
 
 
@@ -255,53 +267,128 @@ for _ in range(3):
     hero2.draw_card()
 
 
-turn = 0
+# turn = 0
+turn = 1
 
-while hero1.is_alive and hero2.is_alive :
-     
-    hero1._ap = hero1._ap + turn
-    while hero1.ap > 0 :
-        print (f"your AP = {hero1.ap} HP = {hero1.c_hel} AR = {hero1.ar} ATK = {hero1.atk}")
-        for i, card in enumerate(hero1.hand):
-            print(f"[{i}] {card.name} | Cost: {card.cost} | ATK: {card.atk}")
-        print ("player one :-")
-        action = input("Enter 'a' to Attack, 'e' to End turn, or Card Index to Summon: ").strip()
+while hero1.is_alive and hero2.is_alive:
+
+    
+
+    hero1.ap = 3 + turn  # شحن الـ AP بناءً على رقم الدور
+    hero1.draw_card()    # سحب كارت تلقائي بداية الدور
+    
+    while hero1.ap > 0:
+        clear_screen()
+        print(f"\n>>> {hero1.name}'s Turn (P1) | ❤️ HP: {hero1.c_hel} | ✨ AP: {hero1.ap}")
         
+        # 1. عرض حالة الملعب واليد
+        show_field(hero1, hero2)
+        print("\nYour Hand:")
+        for i, card in enumerate(hero1.hand):
+            print(f"  [{i}] {card.name} (Cost:{card.cost} | ATK:{card.atk} | HP:{card.c_hel})")
+        
+        action = input("\nAction (Index:Summon, a:HeroAtk, u:UnitAtk, e:End): ").strip().lower()
+
+        # [الهجوم بالبطل]
         if action == "a":
             hero1.Battck(hero2)
+            
+        # [إنهاء الدور]
         elif action == "e":
             hero1.ap = 0
-            break # ينهي الدور يدوياً
-        elif action.isdigit(): # لو دخل رقم (Index)
+            print(f"--- {hero1.name} ended the turn ---")
+            break
+            
+        # [الهجوم بالوحدات في الملعب]
+        elif action == "u":
+            if len(hero1.field) > 0:
+                try:
+                    u_idx = int(input("Select YOUR unit index to attack: "))
+                    if 0 <= u_idx < len(hero1.field):
+                        attacker = hero1.field[u_idx]
+                        target_choice = input("Attack Enemy Hero (h) or Enemy Unit (Index)? ").strip().lower()
+                        
+                        if target_choice == 'h':
+                            attacker.Battck(hero2)
+                        elif target_choice.isdigit():
+                            t_idx = int(target_choice)
+                            if 0 <= t_idx < len(hero2.field):
+                                victim = hero2.field[t_idx]
+                                attacker.Battck(victim)
+                                if victim.c_hel <= 0:
+                                    print(f"💀 {victim.name} has been destroyed!")
+                                    hero2.field.pop(t_idx)
+                except (ValueError, IndexError):
+                    print("⚠️ Invalid input or index!")
+            else:
+                print("❌ No units on field to attack with!")
+
+        # [استدعاء كارت للملعب باستخدام الـ Index]
+        elif action.isdigit():
             idx = int(action)
-            hero1.summon_card(idx) # استدعاء الدالة اللي بتنقل الكارت للملعب
+            hero1.summon_card(idx)
         
-        if not hero2.is_alive: break
+        # فحص فوز اللاعب الأول فوراً
+        if not hero2.is_alive: 
+            print(f"\n🏆 {hero1.name} IS THE VICTOR!")
+            break
 
+    if not hero2.is_alive: break
 
-
-
-    while hero2.ap > 0 :
-        print (f"your AP = {hero2.ap} HP = {hero2.c_hel} AR = {hero2.ar} ATK = {hero2.atk}")
+    # ---------------------------------------------------------
+    # --- دور اللاعب الثاني (PLAYER 2) ---
+    # ---------------------------------------------------------
+    hero2.ap = 3 + turn
+    hero2.draw_card()
+    
+    while hero2.ap > 0:
+        clear_screen()
+        print(f"\n>>> {hero2.name}'s Turn (P2) | ❤️ HP: {hero2.c_hel} | ✨ AP: {hero2.ap}")
+        
+        show_field(hero2, hero1) # عرض ملعب اللاعب التاني أولاً لسهولة الرؤية
+        print("\nYour Hand:")
         for i, card in enumerate(hero2.hand):
-            print(f"[{i}] {card.name} | Cost: {card.cost} | ATK: {card.atk}")
+            print(f"  [{i}] {card.name} (Cost:{card.cost} | ATK:{card.atk} | HP:{card.c_hel})")
+            
+        action = input("\nAction (Index:Summon, a:HeroAtk, u:UnitAtk, e:End): ").strip().lower()
 
-        print ("player two :-")
-        action = input("Enter 'a' to Attack, 'e' to End turn, or Card Index to Summon: ").strip()
-        
         if action == "a":
             hero2.Battck(hero1)
         elif action == "e":
             hero2.ap = 0
-            break # ينهي الدور يدوياً
-        elif action.isdigit(): # لو دخل رقم (Index)
+            break
+        elif action == "u":
+            if len(hero2.field) > 0:
+                try:
+                    u_idx = int(input("Select YOUR unit index to attack: "))
+                    if 0 <= u_idx < len(hero2.field):
+                        attacker = hero2.field[u_idx]
+                        target_choice = input("Attack Enemy Hero (h) or Enemy Unit (Index)? ").strip().lower()
+                        
+                        if target_choice == 'h':
+                            attacker.Battck(hero1)
+                        elif target_choice.isdigit():
+                            t_idx = int(target_choice)
+                            if 0 <= t_idx < len(hero1.field):
+                                victim = hero1.field[t_idx]
+                                attacker.Battck(victim)
+                                if victim.c_hel <= 0:
+                                    print(f"💀 {victim.name} has been destroyed!")
+                                    hero1.field.pop(t_idx)
+                except (ValueError, IndexError):
+                    print("⚠️ Invalid input or index!")
+            else:
+                print("❌ No units on field to attack with!")
+
+        elif action.isdigit():
             idx = int(action)
-            hero2.summon_card(idx) # استدعاء الدالة اللي بتنقل الكارت للملعب
-        
-        if not hero1.is_alive: break
+            hero2.summon_card(idx)
 
-    turn += 1 
+        if not hero1.is_alive:
+            print(f"\n🏆 {hero2.name} IS THE VICTOR!")
+            break
 
+    turn += 1
 
 
 
